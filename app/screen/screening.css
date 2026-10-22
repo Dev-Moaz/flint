@@ -1,0 +1,473 @@
+/* ------------------------------------------------------------------ */
+/*  Screening page: same palette, type and card language as homepage   */
+/*  Everything is prefixed .sc so it cannot clash with Tailwind.       */
+/* ------------------------------------------------------------------ */
+
+:where(body){margin:0}
+.sc, .sc *, .sc *::before, .sc *::after{box-sizing:border-box}
+
+.sc{
+  --ink:#1c1c1e;
+  --violet:#8f80e6;
+  --violet-deep:#5645c6;
+  --muted:#5d5b68;
+  --line:#e7e3f6;
+  --panel:#eae7fd;
+  position:relative;
+  isolation:isolate;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  min-height:100dvh;
+  overflow:hidden;
+  color:var(--ink);
+  color-scheme:light;
+  font-family:var(--lk-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(70% 62% at 0% 100%, #c5b9f6 0%, rgba(197,185,246,0) 72%),
+    radial-gradient(62% 72% at 100% 52%, #f8eecb 0%, rgba(248,238,203,0) 72%),
+    radial-gradient(48% 42% at 0% 8%, rgba(216,208,250,.6) 0%, rgba(216,208,250,0) 72%),
+    #faf9fd;
+}
+
+.sc-grid{
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.85) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.85) 1px, transparent 1px);
+  background-size:72px 72px;
+  background-position:center top;
+  -webkit-mask-image:radial-gradient(90% 80% at 50% 45%, #000 20%, transparent 85%);
+  mask-image:radial-gradient(90% 80% at 50% 45%, #000 20%, transparent 85%);
+}
+
+.sc-wrap{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:432px;
+  padding:clamp(28px, 6dvh, 64px) 18px;
+  transition:max-width .6s cubic-bezier(.2,.8,.2,1);
+}
+
+/* ---------- header above the card ---------- */
+.sc-head{margin:0 6px 22px}
+.sc-title{
+  margin:0;
+  font-family:var(--lk-serif), Georgia, serif;
+  font-weight:500;
+  font-size:clamp(1.9rem, 1.45rem + 2.2vw, 2.5rem);
+  line-height:1.08;
+  letter-spacing:-.02em;
+  text-wrap:balance;
+}
+.sc-sub{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:4px 9px;
+  margin:10px 0 0;
+  font-size:.9375rem;
+  line-height:1.4;
+  color:var(--muted);
+}
+.sc-dot{display:block;width:5px;height:5px;border-radius:50%;background:var(--violet)}
+
+/* ---------- the card ---------- */
+.sc-card{
+  padding:22px;
+  background:#fff;
+  border:3px solid rgba(255,255,255,.92);
+  border-radius:28px;
+  box-shadow:
+    0 0 0 1px rgba(110,95,190,.08),
+    0 24px 44px -16px rgba(70,50,150,.22),
+    0 2px 6px rgba(70,50,150,.06);
+  animation:sc-rise .85s cubic-bezier(.2,.7,.2,1) backwards;
+}
+@keyframes sc-rise{
+  from{opacity:0;transform:translateY(40px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* content that replaces the form after a submission */
+.sc-swap{animation:sc-fade .45s ease backwards}
+@keyframes sc-fade{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ---------- form ---------- */
+.sc-form{display:flex;flex-direction:column;gap:22px}
+.sc-cols{display:flex;flex-direction:column;gap:22px}
+.sc-field{display:flex;flex-direction:column}
+.sc-label{
+  display:block;
+  margin:0 0 9px 2px;
+  font-size:.875rem;
+  font-weight:500;
+  color:#3d3b48;
+}
+
+/* the one bold moment: income in large serif figures */
+.sc-income{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 20px;
+  background:var(--panel);
+  border:2px solid transparent;
+  border-radius:20px;
+  transition:border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+.sc-income:focus-within{
+  background:#efecfe;
+  border-color:var(--violet);
+  box-shadow:0 0 0 4px rgba(143,128,230,.18);
+}
+.sc-income__sign{
+  font-family:var(--lk-serif), Georgia, serif;
+  font-size:2.25rem;
+  line-height:1;
+  color:var(--violet);
+}
+.sc-income__input{
+  flex:1;
+  min-width:0;
+  width:100%;
+  height:56px;
+  padding:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  font-family:var(--lk-serif), Georgia, serif;
+  font-weight:500;
+  font-size:clamp(2rem, 1.2rem + 3vw, 2.5rem);
+  letter-spacing:-.02em;
+  color:var(--ink);
+  font-variant-numeric:lining-nums tabular-nums;
+  -moz-appearance:textfield;
+  appearance:textfield;
+}
+.sc-income__input::-webkit-outer-spin-button,
+.sc-income__input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sc-income__input::placeholder{
+  font-family:var(--lk-sans), system-ui, sans-serif;
+  font-weight:400;
+  font-size:1rem;
+  letter-spacing:0;
+  color:#77738f;
+}
+
+/* regular input (date). 16px so iOS never zooms on focus */
+.sc-input{
+  display:block;
+  width:100%;
+  min-height:56px;
+  padding:0 18px;
+  background:#fff;
+  border:1.5px solid var(--line);
+  border-radius:18px;
+  font:500 1rem/1.2 var(--lk-sans), system-ui, sans-serif;
+  color:var(--ink);
+  text-align:left;
+  -webkit-appearance:none;
+  appearance:none;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.sc-input:focus{
+  outline:0;
+  border-color:var(--violet);
+  box-shadow:0 0 0 4px rgba(143,128,230,.18);
+}
+
+/* move-in date: typed as dd/mm/yy, with a calendar button that opens the browser's own date picker */
+.sc-date{position:relative}
+.sc-date .sc-input{padding-right:56px}
+.sc-date__pick{
+  position:absolute;
+  top:50%;
+  right:6px;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  padding:0;
+  border:0;
+  border-radius:14px;
+  background:transparent;
+  color:#6f6a86;
+  cursor:pointer;
+  transform:translateY(-50%);
+  transition:background-color .2s ease;
+}
+.sc-date__pick:hover{background:var(--panel)}
+.sc-date__pick:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+/* the real date input only supplies the picker: invisible, next to the button so the picker opens beside it */
+.sc-date__native{
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:1px;
+  height:1px;
+  padding:0;
+  border:0;
+  opacity:0;
+  pointer-events:none;
+}
+.sc-field__error{margin:8px 2px 0;font-size:.8125rem;line-height:1.4;color:#8f2a2a}
+
+/* confirmation rows */
+.sc-confirms{display:flex;flex-direction:column;gap:18px}
+.sc-confirm{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:14px 16px;
+  background:#faf9fe;
+  border:1.5px solid var(--line);
+  border-radius:16px;
+  cursor:pointer;
+  transition:background-color .2s ease;
+}
+.sc-confirm:hover{background:#f4f2fd}
+.sc-confirm__input{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  margin:0;
+  opacity:0;
+  cursor:pointer;
+}
+.sc-confirm__box{
+  flex:none;
+  display:grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  background:#fff;
+  border:1.5px solid #c9c3e6;
+  border-radius:7px;
+  color:#fff;
+  transition:background-color .2s ease, border-color .2s ease;
+}
+.sc-confirm__box svg{opacity:0;transform:scale(.6);transition:opacity .15s ease, transform .2s ease}
+.sc-confirm__input:checked + .sc-confirm__box{background:var(--violet);border-color:var(--violet)}
+.sc-confirm__input:checked + .sc-confirm__box svg{opacity:1;transform:scale(1)}
+.sc-confirm__input:focus-visible + .sc-confirm__box{outline:2px solid var(--violet);outline-offset:3px}
+.sc-confirm__text{font-size:.9375rem;line-height:1.35;color:#34323f}
+
+/* yes / no questions: a label like the other fields, then the two choices side by side */
+.sc-ask{min-width:0;margin:0;padding:0;border:0}
+.sc-ask .sc-label{padding:0}
+.sc-ask__opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sc-ask .sc-confirm__input + .sc-confirm__box{border-radius:50%}
+.sc-confirm:has(.sc-confirm__input:checked){background:#f1eefe;border-color:var(--violet)}
+
+/* submit */
+.sc-submit{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+  height:56px;
+  margin-top:2px;
+  border:0;
+  border-radius:999px;
+  background:var(--ink);
+  color:#fff;
+  font:600 .9375rem/1 var(--lk-sans), system-ui, sans-serif;
+  cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16), 0 10px 22px -10px rgba(28,28,30,.6);
+  transition:background-color .2s ease, transform .15s ease, opacity .2s ease;
+}
+.sc-submit:hover:not(:disabled){background:#38383c}
+.sc-submit:active:not(:disabled){transform:scale(.985)}
+.sc-submit:disabled{opacity:.6;cursor:not-allowed}
+.sc-submit:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+
+/* inline error */
+.sc-error{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:13px 15px;
+  background:#fdeeee;
+  border-radius:16px;
+  font-size:.875rem;
+  line-height:1.45;
+  color:#8f2a2a;
+}
+.sc-error svg{flex:none;margin-top:1px}
+
+/* ---------- avatars (same treatment as homepage cards) ---------- */
+.sc-avatar{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  box-shadow:0 0 0 4px rgba(255,255,255,.9), 0 8px 16px -8px rgba(60,40,140,.35);
+}
+.sc-avatar--violet{background:var(--violet);color:#fff}
+.sc-avatar--lilac{background:#ddd7fb;color:var(--violet-deep)}
+
+/* ---------- notices: link unavailable, already completed, rejection ---------- */
+.sc-notice{padding:14px 4px 10px;text-align:center}
+.sc-notice .sc-avatar{margin:0 auto 22px}
+.sc-notice__title{
+  margin:0;
+  font-family:var(--lk-serif), Georgia, serif;
+  font-weight:500;
+  font-size:1.625rem;
+  line-height:1.15;
+  letter-spacing:-.015em;
+  color:var(--ink);
+}
+.sc-notice__text{
+  max-width:28em;
+  margin:12px auto 0;
+  font-size:.9375rem;
+  line-height:1.6;
+  color:var(--muted);
+  text-wrap:pretty;
+}
+.sc-notice__text strong{font-weight:600;color:var(--ink)}
+.sc-notice__small{
+  max-width:28em;
+  margin:14px auto 0;
+  font-size:.8125rem;
+  line-height:1.55;
+  color:#77747f;
+  text-wrap:pretty;
+}
+.sc-soft{
+  padding:20px;
+  background:var(--panel);
+  border-radius:20px;
+  text-align:center;
+  font-size:.9375rem;
+  line-height:1.55;
+  color:#3d3b48;
+}
+
+/* ---------- confirmed: calendar ---------- */
+.sc-confirmed{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 18px;
+  background:var(--panel);
+  border-radius:20px;
+}
+.sc-confirmed__title{
+  margin:0;
+  font-family:var(--lk-serif), Georgia, serif;
+  font-weight:500;
+  font-size:1.25rem;
+  line-height:1.15;
+  letter-spacing:-.012em;
+}
+.sc-confirmed__text{margin:4px 0 0;font-size:.875rem;line-height:1.4;color:var(--muted)}
+.sc-cal{
+  margin-top:14px;
+  overflow:hidden;
+  background:#fff;
+  border:1.5px solid var(--line);
+  border-radius:20px;
+}
+.sc-cal iframe{display:block;width:100%;height:clamp(480px, 70dvh, 640px);border:0}
+
+/* ---------- wide screens: landscape card ---------- */
+@media (min-width:900px){
+  /* only the main page (the one with a header) goes wide */
+  .sc-wrap:has(.sc-head){max-width:1000px}
+
+  .sc-head{margin:0 8px 28px}
+  .sc-title{font-size:clamp(2.5rem, 1.4rem + 2vw, 3.25rem);max-width:20em}
+  .sc-card{padding:28px}
+
+  /* form: income tile on the left, the rest on the right */
+  .sc-cols{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+    column-gap:28px;
+    row-gap:22px;
+  }
+  .sc-field--income{grid-column:1;grid-row:1 / span 3}
+  .sc-field--date{grid-column:2;grid-row:1}
+  .sc-confirms{grid-column:2;grid-row:2}
+  .sc-submit{grid-column:2;grid-row:3;align-self:end;margin-top:0}
+
+  .sc-field--income .sc-income{flex:1;padding:20px 30px}
+  .sc-field--income .sc-income__sign{font-size:3.25rem}
+  .sc-field--income .sc-income__input{height:96px;font-size:clamp(3rem, 2rem + 2.6vw, 4.25rem)}
+
+  /* rejection: icon on the left, text on the right */
+  .sc-notice--row{
+    display:grid;
+    grid-template-columns:auto minmax(0, 1fr);
+    column-gap:26px;
+    align-items:start;
+    padding:14px 10px;
+    text-align:left;
+  }
+  .sc-notice--row .sc-avatar{grid-row:1 / span 3;margin:2px 0 0}
+  .sc-notice--row .sc-notice__text,
+  .sc-notice--row .sc-notice__small{max-width:38em;margin-left:0;margin-right:0}
+  .sc-notice--row .sc-notice__text{margin-top:10px}
+
+  /* calendar: wide enough for the three-column layout */
+  .sc-cal iframe{height:clamp(520px, 68dvh, 660px)}
+}
+
+/* ---------- large screens: confirmation beside the calendar ---------- */
+/* Needs ~800px for the iframe, otherwise Cal.com falls back to its narrow layout. */
+@media (min-width:1180px){
+  .sc-wrap:has(.sc-qualified){max-width:1240px; height: 100dvh;}
+
+  .sc-qualified{
+    display:grid;
+    grid-template-columns:260px minmax(0, 1fr);
+    column-gap:24px;
+  }
+  .sc-qualified .sc-confirmed{
+    flex-direction:column;
+    justify-content:center;
+    gap:18px;
+    padding:28px 24px;
+    text-align:center;
+  }
+  .sc-qualified .sc-avatar{width:56px;height:56px}
+  .sc-qualified .sc-confirmed__title{font-size:1.625rem;line-height:1.12}
+  .sc-qualified .sc-confirmed__text{margin-top:8px;font-size:.9375rem}
+  .sc-qualified .sc-cal{margin-top:0}
+}
+
+/* ---------- small screens ---------- */
+@media (max-width:380px){
+  .sc-card{padding:18px}
+  .sc-income{padding:10px 16px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .sc-card,
+  .sc-swap{animation:none}
+  .sc-wrap{transition:none}
+  .sc-income,
+  .sc-input,
+  .sc-date__pick,
+  .sc-confirm,
+  .sc-confirm__box,
+  .sc-confirm__box svg,
+  .sc-submit{transition:none}
+}
