@@ -18,6 +18,9 @@ export const REVIEW_REASON_LABELS: Record<string, string> = {
   email_is_system_address: 'The applicant\u2019s address looked like a system address',
   empty_body: 'The enquiry email was empty',
   rate_limited: 'Paused: unusually many enquiries in one hour',
+  // the applicant answered the questions and the income needs a decision from the agency
+  income_borderline: 'Income is close to your affordability requirement',
+  income_low_guarantor_offered: 'Income is below your requirement, but the applicant can provide a UK guarantor',
 };
 
 export const BOOKING_EXCEPTION_LABELS: Record<string, string> = {

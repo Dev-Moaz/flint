@@ -5,6 +5,7 @@ import { useId, useMemo, useRef, useState, useTransition } from 'react';
 import { TriageInput } from '@/types';
 import QualifiedConfirmation from '@/components/qualified-confirmation';
 import PoliteRejection from '@/components/polite-rejection';
+import UnderReview from '@/components/under-review';
 import { addDays, formatUkDate, londonDate, maskUkDate, parseUkDate } from '@/lib/dates';
 import { MOVE_IN_MAX_DAYS } from '@/lib/triage-config';
 
@@ -109,15 +110,17 @@ export default function ScreeningForm({
   // count as a "no" either, because a "no" rejects the applicant automatically.
   const [rightToRent, setRightToRent] = useState<YesNo>(null);
   const [hasCcj, setHasCcj] = useState<YesNo>(null);
+  const [ukGuarantor, setUkGuarantor] = useState<YesNo>(null);
 
   const [isPending, startTransition] = useTransition();
   const [submissionResult, setSubmissionResult] = useState<{
-    status: 'idle' | 'success' | 'rejected' | 'error';
+    status: 'idle' | 'success' | 'review' | 'rejected' | 'error';
     calendarUrl?: string | null;
     errorMessage?: string;
   }>({ status: 'idle' });
 
   const incomeId = useId();
+  const incomeHintId = useId();
   const dateId = useId();
   const dateErrorId = useId();
 
@@ -133,7 +136,7 @@ export default function ScreeningForm({
   // Only complain once the person has left the field, or has typed a full four-digit year
   const showDateError = moveInText !== '' && moveInDate === null && (moveInTouched || moveInText.length === 10);
 
-  const canSubmit = rightToRent !== null && hasCcj !== null && moveInDate !== null;
+  const canSubmit = rightToRent !== null && hasCcj !== null && ukGuarantor !== null && moveInDate !== null;
 
   // The calendar button opens the browser's own date picker (a hidden date input) and copies the choice into the text field
   const openPicker = () => {
@@ -150,15 +153,16 @@ export default function ScreeningForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // The button stays disabled until the date is valid and both questions are answered; this also covers any other way of submitting
-    if (rightToRent === null || hasCcj === null || moveInDate === null) return;
+    // The button stays disabled until the date is valid and every question is answered; this also covers any other way of submitting
+    if (rightToRent === null || hasCcj === null || ukGuarantor === null || moveInDate === null) return;
 
-    // The server still receives the same two booleans: "no CCJs" is the answer "No" to the CCJ question
+    // The server receives booleans: "no CCJs" is the answer "No" to the CCJ question
     const answers: TriageInput = {
       ...formData,
       moveInDate,
       hasRightToRent: rightToRent === 'yes',
       hasNoCCJ: hasCcj === 'no',
+      canProvideUkGuarantor: ukGuarantor === 'yes',
     };
 
     startTransition(async () => {
@@ -183,10 +187,14 @@ export default function ScreeningForm({
           return;
         }
 
-        if (data.isQualified) {
+        if (data.outcome === 'qualified') {
           setSubmissionResult({
             status: 'success',
             calendarUrl: data.calendarUrl,
+          });
+        } else if (data.outcome === 'review') {
+          setSubmissionResult({
+            status: 'review',
           });
         } else {
           setSubmissionResult({
@@ -204,6 +212,9 @@ export default function ScreeningForm({
 
   // شاشة النجاح: إظهار التقويم بنعومة
   if (submissionResult.status === 'success') return <QualifiedConfirmation calendarUrl={submissionResult.calendarUrl} />;
+
+  // أجاب عن الأسئلة ودخله ينتظر قرار الوكالة
+  if (submissionResult.status === 'review') return <UnderReview />;
 
   // شاشة الرفض الهادئة
   if (submissionResult.status === 'rejected') return <PoliteRejection />;
@@ -223,6 +234,9 @@ export default function ScreeningForm({
           <label htmlFor={incomeId} className="sc-label">
             Household Gross Annual Income
           </label>
+          <p id={incomeHintId} className="sc-hint">
+            Before tax. Include salary, benefits, pensions and any other regular income of the household.
+          </p>
           <div className="sc-income">
             <span className="sc-income__sign" aria-hidden="true">
               £
@@ -233,6 +247,7 @@ export default function ScreeningForm({
               inputMode="numeric"
               required
               min="0"
+              aria-describedby={incomeHintId}
               placeholder="Enter annual income"
               value={formData.annualIncome || ''}
               onChange={(e) => setFormData({ ...formData, annualIncome: Number(e.target.value) })}
@@ -289,6 +304,7 @@ export default function ScreeningForm({
         <div className="sc-confirms">
           <YesNoQuestion legend="Do you have the right to rent in England?" value={rightToRent} onChange={setRightToRent} />
           <YesNoQuestion legend="Do you have any active County Court Judgments (CCJs)?" value={hasCcj} onChange={setHasCcj} />
+          <YesNoQuestion legend="If needed, could you provide a guarantor who lives in the UK?" value={ukGuarantor} onChange={setUkGuarantor} />
         </div>
 
         <button type="submit" disabled={isPending || !canSubmit} aria-busy={isPending} className="sc-submit">

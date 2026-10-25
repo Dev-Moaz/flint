@@ -1,8 +1,8 @@
 // lib/triage-rules.ts
 import { z } from 'zod';
-import type { FailureCode, TriageInput, TriageResult } from '@/types';
+import type { FailureCode, ReviewReason, TriageInput, TriageResult } from '@/types';
 import { addDays, isValidIsoDate, londonDate } from '@/lib/dates';
-import { DEFAULT_INCOME_MULTIPLIER, MOVE_IN_MAX_DAYS } from '@/lib/triage-config';
+import { DEFAULT_INCOME_MULTIPLIER, DEFAULT_MIN_INCOME_MULTIPLIER, MOVE_IN_MAX_DAYS } from '@/lib/triage-config';
 
 const InputSchema = z.object({
   annualIncome: z
@@ -10,6 +10,7 @@ const InputSchema = z.object({
     .refine((n) => Number.isFinite(n) && n >= 0 && n <= 100_000_000),
   hasRightToRent: z.boolean(),
   hasNoCCJ: z.boolean(),
+  canProvideUkGuarantor: z.boolean(),
   moveInDate: z.string(),
 });
 
@@ -42,20 +43,44 @@ export function resolveMultiplier(value: unknown): number {
 }
 
 /**
+ * The lowest multiplier that is still worth a person's look. A missing or invalid value falls back
+ * to the default, and it can never be higher than the qualifying multiplier (then there is no review band).
+ */
+export function resolveMinMultiplier(value: unknown, multiplier: number): number {
+  const n = Number(value);
+  const min = Number.isFinite(n) && n > 0 ? n : DEFAULT_MIN_INCOME_MULTIPLIER;
+  return Math.min(min, multiplier);
+}
+
+/**
  * The deterministic screening engine (UK standard criteria).
  * The move-in date is recorded but is not a criterion.
  * Returns reason CODES only: no income figures leave this function.
+ *
+ * Income, with an example multiplier of 30 and a minimum of 27:
+ *   30x or more                      -> qualified
+ *   27x up to 30x                    -> a person decides (income_borderline)
+ *   below 27x, UK guarantor offered  -> a person decides (income_low_guarantor_offered)
+ *   below 27x, no guarantor          -> rejected
+ * Right to rent and CCJs are never softened: failing either one is a rejection.
  */
 export function evaluateTenantTriage(
   input: TriageInput,
   monthlyRent: number,
-  multiplier: number = DEFAULT_INCOME_MULTIPLIER
+  multiplier: number = DEFAULT_INCOME_MULTIPLIER,
+  minMultiplier?: number | null
 ): TriageResult {
+  const qualifyAt = resolveMultiplier(multiplier);
+  const reviewFrom = resolveMinMultiplier(minMultiplier, qualifyAt);
+
   const failureCodes: FailureCode[] = [];
+  let reviewReason: ReviewReason | null = null;
 
   // 1. الدخل السنوي (قاعدة المضاعف، 30 ضعفاً افتراضياً)
-  if (input.annualIncome < monthlyRent * resolveMultiplier(multiplier)) {
-    failureCodes.push('INCOME_BELOW_THRESHOLD');
+  if (input.annualIncome < monthlyRent * qualifyAt) {
+    if (input.annualIncome >= monthlyRent * reviewFrom) reviewReason = 'income_borderline';
+    else if (input.canProvideUkGuarantor === true) reviewReason = 'income_low_guarantor_offered';
+    else failureCodes.push('INCOME_BELOW_THRESHOLD');
   }
 
   // 2. حق الإقامة (إقرار ذاتي: فحص أولي، ويبقى التحقق بالوثائق على الوكالة)
@@ -64,12 +89,14 @@ export function evaluateTenantTriage(
   // 3. الأحكام القضائية والسجل الائتماني (CCJs)
   if (input.hasNoCCJ !== true) failureCodes.push('ADVERSE_CREDIT');
 
-  const isQualified = failureCodes.length === 0;
-  return {
-    isQualified,
-    failureCodes,
-    nextAction: isQualified ? 'SHOW_CALENDAR' : 'SHOW_REJECTION',
-  };
+  // A hard failure always wins over a review
+  if (failureCodes.length > 0) {
+    return { isQualified: false, failureCodes, reviewReason: null, nextAction: 'SHOW_REJECTION' };
+  }
+  if (reviewReason) {
+    return { isQualified: false, failureCodes, reviewReason, nextAction: 'SHOW_REVIEW' };
+  }
+  return { isQualified: true, failureCodes, reviewReason: null, nextAction: 'SHOW_CALENDAR' };
 }
 
 /** Internal wording for reports (agency-facing, never shown to the tenant). */

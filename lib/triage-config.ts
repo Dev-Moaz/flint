@@ -5,6 +5,12 @@
 export const DEFAULT_INCOME_MULTIPLIER = 30;
 
 /**
+ * Used when an agency has no (or an invalid) min_income_multiplier.
+ * Income between this and the income multiplier is sent to the agency for a decision.
+ */
+export const DEFAULT_MIN_INCOME_MULTIPLIER = 27;
+
+/**
  * How far ahead a move-in date may be picked. This is only a sanity bound against typos:
  * the date is recorded for the agency but is NOT a reason to disqualify anyone.
  */

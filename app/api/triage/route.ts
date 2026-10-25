@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const { data: lead, error } = await supabaseAdmin
     .from('leads')
     .select(
-      'id, status, expires_at, tenant_name, tenant_email, properties ( monthly_rent ), agencies ( slug, calendar_url, income_multiplier )'
+      'id, status, expires_at, tenant_name, tenant_email, properties ( monthly_rent ), agencies ( slug, calendar_url, income_multiplier, min_income_multiplier )'
     )
     .eq('id', leadId)
     .maybeSingle();
@@ -62,8 +62,13 @@ export async function POST(request: Request) {
   }
 
   // The single decision point: all rules live in lib/triage-rules.ts
-  const result = evaluateTenantTriage(input.value, monthlyRent, resolveMultiplier(agency.income_multiplier));
-  const nextStatus: LeadStatus = result.isQualified ? 'QUALIFIED' : 'DISQUALIFIED';
+  const result = evaluateTenantTriage(
+    input.value,
+    monthlyRent,
+    resolveMultiplier(agency.income_multiplier),
+    agency.min_income_multiplier
+  );
+  const nextStatus: LeadStatus = result.isQualified ? 'QUALIFIED' : result.reviewReason ? 'NEEDS_REVIEW' : 'DISQUALIFIED';
 
   const { data: updated, error: updateError } = await supabaseAdmin
     .from('leads')
@@ -73,10 +78,12 @@ export async function POST(request: Request) {
       has_right_to_rent: input.value.hasRightToRent,
       move_in_date: input.value.moveInDate,
       has_no_ccj: input.value.hasNoCCJ,
+      can_provide_uk_guarantor: input.value.canProvideUkGuarantor,
       failure_codes: result.failureCodes,
+      review_reason: result.reviewReason,
       screened_at: new Date().toISOString(),
-      // a qualified tenant gets a fresh window to book
-      ...(result.isQualified
+      // a qualified tenant, or one waiting for the agency's decision, gets a fresh window to book
+      ...(nextStatus !== 'DISQUALIFIED'
         ? { expires_at: new Date(Date.now() + BOOKING_LINK_TTL_DAYS * DAY_MS).toISOString() }
         : {}),
     })
@@ -93,7 +100,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
-    isQualified: result.isQualified,
+    outcome: result.isQualified ? 'qualified' : result.reviewReason ? 'review' : 'rejected',
     calendarUrl: result.isQualified
       ? buildCalendarUrl(agency.calendar_url, { id: lead.id, name: lead.tenant_name, email: lead.tenant_email })
       : null,

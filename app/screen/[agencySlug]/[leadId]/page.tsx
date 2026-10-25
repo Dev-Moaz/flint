@@ -5,6 +5,7 @@ import { getLeadScreeningData } from '@/lib/triage-service';
 import ScreeningForm from '@/components/screening-form';
 import QualifiedConfirmation from '@/components/qualified-confirmation';
 import PoliteRejection from '@/components/polite-rejection';
+import UnderReview from '@/components/under-review';
 import BookedConfirmation from '@/components/booked-confirmation';
 import { serif, sans } from '@/lib/fonts';
 import '../../screening.css';
@@ -85,6 +86,11 @@ export default async function ScreeningPage({ params }: PageProps) {
 
     case 'DISQUALIFIED':
       body = <PoliteRejection />;
+      break;
+
+    // أجاب عن الأسئلة ودخله ينتظر قرار الوكالة
+    case 'NEEDS_REVIEW':
+      body = <UnderReview />;
       break;
 
     case 'BOOKED':

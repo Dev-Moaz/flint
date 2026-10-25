@@ -219,7 +219,8 @@ async function sendOpsSummary(
 
   const [failed, review, pending, exceptions, missed] = await Promise.all([
     db.from('inbound_emails').select('agency_id, reason').eq('status', 'FAILED').gte('updated_at', since36).limit(200),
-    db.from('leads').select('agency_id').eq('status', 'NEEDS_REVIEW').gte('created_at', sinceLookback).lt('created_at', since24).limit(500),
+    // Only enquiries the system could not handle: an income decision belongs to the agency, not to the owner
+    db.from('leads').select('agency_id').eq('status', 'NEEDS_REVIEW').eq('review_reason', 'property_not_matched').gte('created_at', sinceLookback).lt('created_at', since24).limit(500),
     db.from('leads').select('agency_id, id, invitation_error, invitation_sent_at').eq('status', 'PENDING').gte('created_at', since48).limit(500),
     db.from('calendar_events').select('agency_id, id').in('status', ['REJECTED', 'NO_MATCH']).gte('created_at', since36).limit(200),
     // New enquiries turned away because the agency has no access: the people to call
