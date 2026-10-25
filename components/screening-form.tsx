@@ -203,7 +203,7 @@ export default function ScreeningForm({
   };
 
   // شاشة النجاح: إظهار التقويم بنعومة
-  if (submissionResult.status === 'success') return <QualifiedConfirmation calendarUrl={submissionResult.calendarUrl} leadId={leadId} agencySlug={agencySlug} />;
+  if (submissionResult.status === 'success') return <QualifiedConfirmation calendarUrl={submissionResult.calendarUrl} />;
 
   // شاشة الرفض الهادئة
   if (submissionResult.status === 'rejected') return <PoliteRejection />;

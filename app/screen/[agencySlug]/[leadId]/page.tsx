@@ -80,7 +80,7 @@ export default async function ScreeningPage({ params }: PageProps) {
 
     // تأهل لكنه لم يحجز بعد: نعيد له التقويم
     case 'QUALIFIED':
-      body = <QualifiedConfirmation calendarUrl={screeningData.calendarUrl} leadId={leadId} agencySlug={agencySlug} />;
+      body = <QualifiedConfirmation calendarUrl={screeningData.calendarUrl} />;
       break;
 
     case 'DISQUALIFIED':

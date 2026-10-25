@@ -320,8 +320,6 @@
 }
 .sc-avatar--violet{background:var(--violet);color:#fff}
 .sc-avatar--lilac{background:#ddd7fb;color:var(--violet-deep)}
-.sc-avatar--green{background:#3da66a;color:#fff}
-.sc-avatar{transition:background-color .4s ease}
 
 /* ---------- notices: link unavailable, already completed, rejection ---------- */
 .sc-notice{padding:14px 4px 10px;text-align:center}
@@ -380,8 +378,6 @@
   letter-spacing:-.012em;
 }
 .sc-confirmed__text{margin:4px 0 0;font-size:.875rem;line-height:1.4;color:var(--muted)}
-.sc-confirmed{transition:background-color .4s ease}
-.sc-confirmed--booked{background:#e4f5ea}
 .sc-cal{
   margin-top:14px;
   overflow:hidden;
