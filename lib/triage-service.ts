@@ -3,6 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import type { LeadStatus } from '@/types';
 import { buildCalendarUrl } from '@/lib/calendar/build-url';
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// The only texts this file lets the public see: never database or internal wording (the detail goes to the
+// server log). An unknown lead and an agency mismatch share one text, so the page cannot be used to find out
+// which leads exist.
+const LINK_NOT_VALID = 'This link is not valid.';
+const LINK_EXPIRED = 'This invitation link has expired.';
+const LOAD_FAILED = 'We could not load this page. Please try again in a few minutes.';
+
 export interface LeadScreeningData {
   isValid: boolean;
   status?: LeadStatus; // الحالة الفعلية بدل isAlreadyProcessed
@@ -20,6 +29,9 @@ export async function getLeadScreeningData(
   agencySlug: string,
   leadId: string
 ): Promise<LeadScreeningData> {
+  // A malformed id can never match a lead: answer like an unknown lead, without touching the database
+  if (!UUID.test(leadId)) return { isValid: false, errorMessage: LINK_NOT_VALID };
+
   try {
     // 1. جلب الطلب مع بيانات الوكالة والعقار وحقل النص الاحتياطي
     const { data: lead, error } = await supabaseAdmin
@@ -47,18 +59,12 @@ export async function getLeadScreeningData(
       .maybeSingle();
 
     if (error) {
-      console.error('SUPABASE ERROR:', error);
-      return {
-        isValid: false,
-        errorMessage: `Database error: ${error.message}`,
-      };
+      console.error('SCREENING LOOKUP ERROR:', error.message);
+      return { isValid: false, errorMessage: LOAD_FAILED };
     }
 
     if (!lead) {
-      return {
-        isValid: false,
-        errorMessage: 'Lead record not found in database.',
-      };
+      return { isValid: false, errorMessage: LINK_NOT_VALID };
     }
 
     const agency = Array.isArray(lead.agencies) ? lead.agencies[0] : lead.agencies;
@@ -66,19 +72,13 @@ export async function getLeadScreeningData(
 
     // 2. التحقق من تطابق الوكالة
     if (!agency || agency.slug !== agencySlug) {
-      return {
-        isValid: false,
-        errorMessage: 'Agency mismatch or invalid agency slug.',
-      };
+      return { isValid: false, errorMessage: LINK_NOT_VALID };
     }
 
     // 3. الرابط المنتهي: لا يُفتح لمن لم يكمل أو لم يحجز بعد
     const isExpired = !!lead.expires_at && new Date(lead.expires_at).getTime() < Date.now();
     if (isExpired && (lead.status === 'PENDING' || lead.status === 'QUALIFIED')) {
-      return {
-        isValid: false,
-        errorMessage: 'This invitation link has expired.',
-      };
+      return { isValid: false, errorMessage: LINK_EXPIRED };
     }
 
     // 4. نعيد الحالة كما هي، والصفحة تقرر ما تعرضه
@@ -99,11 +99,8 @@ export async function getLeadScreeningData(
         }) ?? undefined,
       viewingStartsAt: lead.viewing_starts_at ?? null,
     };
-  } catch (err: any) {
-    console.error('UNEXPECTED SERVER ERROR:', err);
-    return {
-      isValid: false,
-      errorMessage: err.message || 'Internal server error.',
-    };
+  } catch (err) {
+    console.error('SCREENING UNEXPECTED ERROR:', err instanceof Error ? err.message : 'unknown error');
+    return { isValid: false, errorMessage: LOAD_FAILED };
   }
 }
